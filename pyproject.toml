@@ -4,15 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "potential-blacktool"
-version = "0.1.0"
-description = "Scoped passive security assessment toolkit"
+version = "0.2.0"
+description = "Scoped defensive security assessment toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
 
 [project.scripts]
 blacktool = "blacktool.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
