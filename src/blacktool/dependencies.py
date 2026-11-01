@@ -4,7 +4,7 @@ from pathlib import Path
 
 def audit_dependencies(root):
  root=Path(root); findings=[]; inventory=[]
- candidates=[root/"requirements.txt",root/"pyproject.toml",root/"package.json",root/"go.mod"]
+ candidates=[root/"requirements.txt",root/"pyproject.toml",root/"package.json",root/"package-lock.json",root/"npm-shrinkwrap.json",root/"go.mod"]
  for path in candidates:
   if not path.is_file(): continue
   try: text=path.read_text(encoding="utf-8")
@@ -33,6 +33,14 @@ def audit_dependencies(root):
    for section in ("dependencies","devDependencies","optionalDependencies"):
     for name,version in data.get(section,{}).items():
      inventory.append({"ecosystem":"npm","name":name,"constraint":str(version),"manifest":str(path)})
+  elif path.name in ("package-lock.json","npm-shrinkwrap.json"):
+   try: data=json.loads(text)
+   except json.JSONDecodeError:
+    findings.append({"area":"dependencies","severity":"medium","title":"Invalid npm lockfile","detail":str(path),"recommendation":"Regenerate a valid npm lockfile."});continue
+   for package_path,record in data.get("packages",{}).items():
+    if package_path and isinstance(record,dict) and record.get("version"):
+     name=package_path.rsplit("node_modules/",1)[-1]
+     inventory.append({"ecosystem":"npm","name":name,"constraint":str(record["version"]),"manifest":str(path)})
   elif path.name=="go.mod":
    for raw in text.splitlines():
     line=raw.strip()
