@@ -35,7 +35,7 @@ blacktool scan-code ./project --format sarif
 blacktool scan-secrets ./project
 blacktool audit-config ./project
 blacktool audit-api ./openapi.json
-blacktool audit-deps .
+blacktool audit-deps .\nblacktool-osv . --output reports/osv.json
 blacktool report-html reports/code.json
 blacktool report-sarif reports/code.json
 blacktool policy reports/code.json --fail-on high
