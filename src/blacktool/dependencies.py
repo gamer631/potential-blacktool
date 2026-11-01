@@ -43,6 +43,16 @@ def audit_dependencies(root):
      parts=line.split()
      if len(parts)>=2 and re.match(r"v\d",parts[1]):
       inventory.append({"ecosystem":"go","name":parts[0],"constraint":parts[1],"manifest":str(path)})
+ for item in inventory:
+  constraint=str(item.get("constraint", "")).strip()
+  version=None
+  if item.get("ecosystem")=="pypi":
+   match=re.fullmatch(r"==\\s*([A-Za-z0-9_.+!-]+)",constraint)
+   if match: version=match.group(1)
+  elif item.get("ecosystem") in ("npm", "go"):
+   candidate=constraint[1:] if constraint.startswith("=") else constraint
+   if re.fullmatch(r"v?\\d+\\.\\d+\\.\\d+[^\\s]*",candidate): version=candidate
+  item["version"]=version
  if not inventory and not findings:
   findings.append({"area":"dependencies","severity":"info","title":"No supported dependency manifest found",
    "detail":"Looked for requirements.txt, pyproject.toml, package.json and go.mod at the selected root.",
