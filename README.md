@@ -1,6 +1,6 @@
 # Potential BlackTool
 
-A multi-language **defensive security assessment toolkit** for systems you own or are explicitly authorized to test.
+A multi-language **defensive security assessment** toolkit for systems you own or are explicitly authorized to test.
 
 > Authorized use only. This project focuses on passive checks and local source/schema analysis. It does not exploit vulnerabilities, bypass authentication, brute-force accounts, steal credentials, evade monitoring, or access private data.
 
@@ -12,6 +12,7 @@ A multi-language **defensive security assessment toolkit** for systems you own o
 - Dependency manifest inventory (not CVE scanning)
 - JSON, HTML and SARIF 2.1.0 reports
 - CI severity policy gate
+- Local-only web dashboard
 - JavaScript and Go audit helpers
 - Docker image, tests and GitHub Actions
 
@@ -26,7 +27,13 @@ python -m venv .venv
 pip install -e .
 ```
 
-## Commands
+## Dashboard
+```bash
+blacktool dashboard
+```
+Open http://127.0.0.1:8765. The dashboard refuses non-loopback binding. It runs locally; reports are not uploaded.
+
+## CLI
 ```bash
 blacktool init-scope https://your-authorized-domain.example
 blacktool scan https://your-authorized-domain.example --scope scope.json --acknowledge-authorization
@@ -43,12 +50,10 @@ JavaScript/TypeScript helper: `node integrations/javascript/audit.mjs ./src`
 Go helper: `cd integrations/go/passive-audit && go run . -path ../../../src`
 
 ## Finding interpretation
-Rules are heuristic indicators, not proof of exploitability. Review context before assigning severity. The dependency command inventories manifests but performs no CVE matching. The API linter checks declarations only, not runtime authorization enforcement.
+Rules are heuristic indicators, not proof of exploitability. Review context before assigning severity. Dependency command inventories manifests but performs no CVE matching. API linter checks declarations only, not runtime authorization enforcement.
 
 ## Scope and safety
 Only test systems covered by explicit written authorization. Keep hostnames exact; subdomains are not automatically included. HTTPS only, redirects are not followed, and network checks are low-volume and non-destructive. Never commit credentials, tokens, private keys, customer data or scan artifacts.
 
 ## Development
-`make test` or `python -m pip install -e . pytest && pytest -q`.
-
-See [Usage](docs/USAGE.md) and [Security model](docs/SECURITY_MODEL.md). MIT License.
+`python -m pip install -e ".[dev]" && pytest -q`. See [Usage](docs/USAGE.md), [Security model](docs/SECURITY_MODEL.md), and [release checklist](docs/RELEASE_CHECKLIST.md). MIT License.
