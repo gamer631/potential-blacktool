@@ -3,7 +3,6 @@
 Only caller-supplied GET endpoints are requested. Redirects are not followed,
 response bodies are never stored, and credentials are read from environment variables.
 """
-import json
 import os
 import ssl
 import urllib.error
@@ -37,6 +36,9 @@ def audit_authenticated_endpoints(endpoints, scope, token_env=None, opener=None)
     findings, observations = [], []
     for url in endpoints:
         host = scope.validate_url(url)
+        parsed = urlsplit(url)
+        if parsed.query or parsed.fragment:
+            raise ValueError("Endpoint URLs must not contain query strings or fragments")
         headers = {"Accept": "application/json", "User-Agent": scope.user_agent}
         if token:
             headers["Authorization"] = "Bearer " + token
@@ -46,12 +48,10 @@ def audit_authenticated_endpoints(endpoints, scope, token_env=None, opener=None)
             with opener.open(request, timeout=scope.timeout_seconds) as response:
                 status = response.status
                 response_headers = {k.lower(): v for k, v in response.headers.items()}
-                # Read only a small prefix to verify JSON shape; never include body in output.
-                sample = response.read(4096)
+                # Do not read or retain response bodies; authenticated data may be sensitive.
         except urllib.error.HTTPError as exc:
             status = exc.code
             response_headers = {k.lower(): v for k, v in exc.headers.items()}
-            sample = b""
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             findings.append({"area":"authenticated_api","severity":"info",
                 "title":"Endpoint could not be checked","detail":f"{host}: {type(exc).__name__}",
@@ -75,11 +75,5 @@ def audit_authenticated_endpoints(endpoints, scope, token_env=None, opener=None)
                 findings.append({"area":"authenticated_api","severity":"low","title":f"Missing {name} header",
                     "detail":url,"recommendation":recommendation})
         content_type = response_headers.get("content-type", "")
-        if status is not None and 200 <= status < 300 and "json" in content_type.lower() and sample:
-            try:
-                json.loads(sample)
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                findings.append({"area":"authenticated_api","severity":"low","title":"Invalid or truncated JSON response",
-                    "detail":url,"recommendation":"Verify the API returns valid JSON; only a 4 KiB prefix was inspected."})
         observations.append({"url":url,"status":status,"content_type":content_type})
     return findings, observations
