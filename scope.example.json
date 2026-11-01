@@ -1,0 +1,6 @@
+{
+  "allowed_hosts": ["example.com"],
+  "max_requests": 10,
+  "timeout_seconds": 8,
+  "user_agent": "PotentialBlackTool/0.1 (authorized assessment)"
+}
