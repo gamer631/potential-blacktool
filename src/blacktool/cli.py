@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from . import __version__
 from .api_audit import audit_openapi
+from .authenticated_api import audit_authenticated_endpoints
 from .checks import dns_check,http_check,tls_check
 from .code_audit import scan_source
 from .config_audit import audit_config
@@ -29,6 +30,7 @@ def main():
  scan=sub.add_parser("scan");scan.add_argument("url");scan.add_argument("--scope",required=True);scan.add_argument("--acknowledge-authorization",action="store_true");scan.add_argument("--output",default="reports/web.json")
  code=sub.add_parser("scan-code");code.add_argument("path");code.add_argument("--output",default="reports/code.json");code.add_argument("--format",choices=["json","html","sarif"],default="json")
  api=sub.add_parser("audit-api");api.add_argument("schema");api.add_argument("--output",default="reports/api.json");api.add_argument("--format",choices=["json","html","sarif"],default="json")
+ auth=sub.add_parser("audit-auth-api",help="Low-impact authenticated GET checks for authorized staging APIs");auth.add_argument("endpoints");auth.add_argument("--scope",required=True);auth.add_argument("--token-env");auth.add_argument("--acknowledge-authorization",action="store_true");auth.add_argument("--output",default="reports/authenticated-api.json")
  dep=sub.add_parser("audit-deps");dep.add_argument("path",nargs="?",default=".");dep.add_argument("--output",default="reports/dependencies.json")
  sec=sub.add_parser("scan-secrets");sec.add_argument("path");sec.add_argument("--output",default="reports/secrets.json");sec.add_argument("--format",choices=["json","html","sarif"],default="json")
  cfg=sub.add_parser("audit-config");cfg.add_argument("path");cfg.add_argument("--output",default="reports/config.json");cfg.add_argument("--format",choices=["json","html","sarif"],default="json")
@@ -51,6 +53,12 @@ def main():
   scope=Scope.load(a.scope);host=scope.validate_url(a.url)
   meta,findings=http_check(a.url,scope);findings.extend(tls_check(host,scope.timeout_seconds))
   save(make_report(a.url,findings,dns=dns_check(host),http=meta,notice="Passive observations only."),a.output);return
+ if a.command=="audit-auth-api":
+  if not a.acknowledge_authorization:p.error("Confirm written authorization with --acknowledge-authorization")
+  scope=Scope.load(a.scope)
+  endpoints=json.loads(Path(a.endpoints).read_text(encoding="utf-8"))
+  findings,observations=audit_authenticated_endpoints(endpoints,scope,a.token_env)
+  save(make_report(Path(a.endpoints).resolve(),findings,observations=observations,notice="Low-impact GET checks only; no response bodies or credentials stored."),a.output);return
  if a.command=="scan-code":save(make_report(Path(a.path).resolve(),scan_source(a.path)),a.output,a.format);return
  if a.command=="audit-api":save(make_report(Path(a.schema).resolve(),audit_openapi(a.schema)),a.output,a.format);return
  if a.command=="audit-deps":
