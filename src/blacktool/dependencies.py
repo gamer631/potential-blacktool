@@ -47,11 +47,11 @@ def audit_dependencies(root):
   constraint=str(item.get("constraint", "")).strip()
   version=None
   if item.get("ecosystem")=="pypi":
-   match=re.fullmatch(r"==\\s*([A-Za-z0-9_.+!-]+)",constraint)
+   match=re.fullmatch(r"==\s*([A-Za-z0-9_.+!-]+)",constraint)
    if match: version=match.group(1)
   elif item.get("ecosystem") in ("npm", "go"):
    candidate=constraint[1:] if constraint.startswith("=") else constraint
-   if re.fullmatch(r"v?\\d+\\.\\d+\\.\\d+[^\\s]*",candidate): version=candidate
+   if re.fullmatch(r"v?\d+\.\d+\.\d+[^\s]*",candidate): version=candidate
   item["version"]=version
  if not inventory and not findings:
   findings.append({"area":"dependencies","severity":"info","title":"No supported dependency manifest found",
