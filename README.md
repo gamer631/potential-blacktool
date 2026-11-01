@@ -2,58 +2,48 @@
 
 A multi-language **defensive security assessment** toolkit for systems you own or are explicitly authorized to test.
 
-> Authorized use only. This project focuses on passive checks and local source/schema analysis. It does not exploit vulnerabilities, bypass authentication, brute-force accounts, steal credentials, evade monitoring, or access private data.
+> Authorized use only. Passive checks and local source/schema/configuration analysis. No exploitation, authentication bypass, credential attacks, malware, stealth, or unauthorized access.
 
 ## Features
-- Scoped HTTPS posture checks: headers, response metadata, TLS certificate expiry and DNS
-- Exact-host allowlist; redirects are not followed
-- Local source-code pattern review for Python, JavaScript/TypeScript, Go and other common languages
-- Offline OpenAPI/Swagger JSON schema linting
-- Dependency manifest inventory (not CVE scanning)
-- JSON, HTML and SARIF 2.1.0 reports
-- CI severity policy gate
-- Local-only web dashboard
-- JavaScript and Go audit helpers
-- Docker image, tests and GitHub Actions
+- Exact-host scoped HTTPS checks: response headers, TLS certificate expiry and DNS; redirects not followed
+- Local source pattern review for Python, JavaScript/TypeScript, Go and common languages
+- Secret-pattern detection with matched values redacted
+- Docker, Compose, Terraform, Nginx and common configuration pattern review
+- Offline OpenAPI/Swagger JSON linting and dependency manifest inventory
+- JSON, HTML and SARIF 2.1.0 reports; CI severity gate
+- Loopback-only dashboard; JavaScript and Go helpers; Docker and GitHub Actions
 
 ## Install
-Python 3.10+:
 ```bash
 git clone https://github.com/gamer631/potential-blacktool.git
 cd potential-blacktool
 python -m venv .venv
 # Windows: .venv\\Scripts\\activate
 # macOS/Linux: source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
+pytest -q
 ```
 
 ## Dashboard
-```bash
-blacktool dashboard
-```
-Open http://127.0.0.1:8765. The dashboard refuses non-loopback binding. It runs locally; reports are not uploaded.
+Run `blacktool dashboard` and open http://127.0.0.1:8765.
 
 ## CLI
 ```bash
 blacktool init-scope https://your-authorized-domain.example
 blacktool scan https://your-authorized-domain.example --scope scope.json --acknowledge-authorization
-blacktool scan-code ./your-project --output reports/code.json --format sarif
-blacktool audit-api ./openapi.json --output reports/api.json
+blacktool scan-code ./project --format sarif
+blacktool scan-secrets ./project
+blacktool audit-config ./project
+blacktool audit-api ./openapi.json
 blacktool audit-deps .
 blacktool report-html reports/code.json
 blacktool report-sarif reports/code.json
 blacktool policy reports/code.json --fail-on high
 ```
 
-JavaScript/TypeScript helper: `node integrations/javascript/audit.mjs ./src`
+JS helper: `node integrations/javascript/audit.mjs ./src`. Go helper: `cd integrations/go/passive-audit && go run . -path ../../../src`.
 
-Go helper: `cd integrations/go/passive-audit && go run . -path ../../../src`
+## Limitations
+Heuristic findings require review. Dependency inventory is not CVE matching; API schema lint is not runtime authorization testing; configuration checks are pattern-based, not full IaC evaluation. Dynamic exploit testing and authenticated application testing are not included.
 
-## Finding interpretation
-Rules are heuristic indicators, not proof of exploitability. Review context before assigning severity. Dependency command inventories manifests but performs no CVE matching. API linter checks declarations only, not runtime authorization enforcement.
-
-## Scope and safety
-Only test systems covered by explicit written authorization. Keep hostnames exact; subdomains are not automatically included. HTTPS only, redirects are not followed, and network checks are low-volume and non-destructive. Never commit credentials, tokens, private keys, customer data or scan artifacts.
-
-## Development
-`python -m pip install -e ".[dev]" && pytest -q`. See [Usage](docs/USAGE.md), [Security model](docs/SECURITY_MODEL.md), and [release checklist](docs/RELEASE_CHECKLIST.md). MIT License.
+Only assess systems covered by explicit written authorization. Network checks are low-volume and non-destructive. Never commit credentials, private keys, customer data or scan artifacts. See docs/ and MIT LICENSE.
