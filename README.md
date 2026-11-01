@@ -24,6 +24,16 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
+## Authenticated staging API checks
+
+For a dedicated staging app, see [the safe authenticated API guide](docs/AUTHENTICATED-API.md). This mode sends bounded, allowlisted HTTPS GET requests only, reads a short-lived bearer token from an environment variable, does not follow redirects, and never reads or stores response bodies.
+
+```bash
+blacktool audit-auth-api endpoints.json --scope staging-scope.json --token-env STAGING_TOKEN --acknowledge-authorization
+```
+
+Cloud and framework coverage boundaries are documented in [the coverage plan](docs/CLOUD-FRAMEWORK-COVERAGE.md). Production release gates are in [the security checklist](docs/SECURITY-RELEASE-CHECKLIST.md).
+
 ## Dashboard
 Run `blacktool dashboard` and open http://127.0.0.1:8765.
 
